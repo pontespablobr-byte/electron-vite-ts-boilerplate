@@ -1,8 +1,8 @@
 {
-  "name": "meu-app-desktop",
-  "version": "1.0.0",
+  "name": "Gestão de Manutenção Preventiva e Corretiva de Veículos",
+  "version": "0.0.2",
   "main": "dist-electron/main.js",
-  "description": "Projeto base Electron + Vite + TypeScript com IPC seguro e empacotamento por usuário",
+  "description": "Projeto de referência: exercícios IPC",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
