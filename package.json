@@ -1,6 +1,6 @@
 {
   "name": "Gestão de Manutenção Preventiva e Corretiva de Veículos",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "dist-electron/main.js",
   "description": "Projeto de referência: exercícios IPC",
   "scripts": {
@@ -22,8 +22,8 @@
     "vite-plugin-electron-renderer": "^1.0.0"
   },
   "build": {
-    "appId": "com.example.meuapp",
-    "productName": "MeuApp",
+    "appId": "com.frotacontrol.gestao",
+    "productName": "GestãoVeicular",
     "win": {
       "target": "nsis",
       "requestedExecutionLevel": "asInvoker"

@@ -31,61 +31,42 @@ function createWindow() {
   }
 }
 
-function createMenu() {
-  const menu = Menu.buildFromTemplate([
+function criarMenu() {
+  const template: Electron.MenuItemConstructorOptions[] = [
     {
-      label: 'Gestão de Manutenção',
+      label: "Gestão de Manutenção",
       submenu: [
         {
-          label: 'Sobre',
+          label: "Sobre",
           click: () => {
-            console.log('Clicou em Sobre')
+            console.log("Gestão de Manutenção Preventiva e Corretiva de Veículos");
           },
         },
-        { type: 'separator' },
-        {
-          label: 'Sair',
-          role: 'quit',
-        },
+        { type: "separator" },
+        { role: "quit", label: "Sair" },
       ],
     },
     {
-      label: 'Editar',
+      label: "Visualizar",
       submenu: [
-        { label: 'Desfazer', role: 'undo' },
-        { label: 'Refazer', role: 'redo' },
-        { type: 'separator' },
-        { label: 'Recortar', role: 'cut' },
-        { label: 'Copiar', role: 'copy' },
-        { label: 'Colar', role: 'paste' },
+        { role: "reload", label: "Recarregar" },
+        { role: "toggleDevTools", label: "Ferramentas do Desenvolvedor" },
       ],
     },
-  ])
+  ];
 
-  Menu.setApplicationMenu(menu)
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 }
 
 app.whenReady().then(() => {
-  createMenu()
-  createWindow()
+  createWindow();
+  criarMenu();
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
-    }
-  })
-})
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
-
-app.on('before-quit', () => {
-  console.log('Até logo! Encerrando a aplicação.')
-})
-
-ipcMain.handle('canal-ping', async () => {
-  return 'pong do processo principal!'
-})
+app.on("before-quit", () => {
+  console.log("Encerrando o Gestão de Manutenção. Ate logo!");
+});
