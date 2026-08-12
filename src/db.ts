@@ -5,7 +5,7 @@ dotenv.config()
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }, // necessário para Neon
+  ssl: { rejectUnauthorized: true }, // necessário para Neon
 })
 
 export async function inicializarBanco() {
@@ -18,5 +18,26 @@ export async function inicializarBanco() {
       ano INTEGER NOT NULL
     );
   `)
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS motoristas (
+      id SERIAL PRIMARY KEY,
+      nome VARCHAR(150) NOT NULL,
+      cnh VARCHAR(20) NOT NULL UNIQUE,
+      telefone VARCHAR(20) NOT NULL
+    );
+  `)
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS manutencoes (
+      id SERIAL PRIMARY KEY,
+      id_veiculo INTEGER NOT NULL REFERENCES veiculos(id) ON DELETE CASCADE,
+      tipo_servico VARCHAR(150) NOT NULL,
+      data DATE NOT NULL,
+      quilometragem INTEGER NOT NULL,
+      custo NUMERIC(10, 2) NOT NULL
+    );
+  `)
+
   console.log('Banco de dados inicializado com sucesso.')
 }
