@@ -8,6 +8,25 @@ import {
   excluirVeiculo,
   Veiculo,
 } from './veiculos'
+import {
+  findAllMotoristas,
+  findOneMotorista,
+  createMotorista,
+  updateMotorista,
+  removeMotorista,
+  CriarMotoristaDto,
+  AtualizarMotoristaDto,
+} from './Motorista'
+import {
+  findAllManutencoes,
+  createManutencao,
+  updateManutencao,
+  removeManutencao,
+  findManutencoesPorVeiculo,
+  relatorioDespesasPorVeiculo,
+  CriarManutencaoDto,
+  AtualizarManutencaoDto,
+} from './manutencoes'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -86,6 +105,62 @@ function registrarHandlersVeiculos() {
   })
 }
 
+function registrarHandlersMotoristas() {
+  ipcMain.handle('motoristas:listar', async () => {
+    return await findAllMotoristas()
+  })
+
+  ipcMain.handle('motoristas:buscar', async (_evento, id: number) => {
+    return await findOneMotorista(id)
+  })
+
+  ipcMain.handle('motoristas:criar', async (_evento, dto: CriarMotoristaDto) => {
+    return await createMotorista(dto)
+  })
+
+  ipcMain.handle(
+    'motoristas:atualizar',
+    async (_evento, id: number, dto: AtualizarMotoristaDto) => {
+      return await updateMotorista(id, dto)
+    }
+  )
+
+  ipcMain.handle('motoristas:excluir', async (_evento, id: number) => {
+    const sucesso = await removeMotorista(id)
+    return { sucesso }
+  })
+}
+
+export function registrarHandlersManutencoes() {
+  ipcMain.handle('manutencoes:listar', async () => {
+    return await findAllManutencoes()
+  })
+
+  ipcMain.handle('manutencoes:listarPorVeiculo', async (_evento, idVeiculo: number) => {
+    return await findManutencoesPorVeiculo(idVeiculo)
+  })
+
+  ipcMain.handle('manutencoes:criar', async (_evento, dto: CriarManutencaoDto) => {
+    return await createManutencao(dto)
+  })
+
+  ipcMain.handle(
+    'manutencoes:atualizar',
+    async (_evento, id: number, dto: AtualizarManutencaoDto) => {
+      return await updateManutencao(id, dto)
+    }
+  )
+
+  ipcMain.handle('manutencoes:excluir', async (_evento, id: number) => {
+    const sucesso = await removeManutencao(id)
+    return { sucesso }
+  })
+
+  ipcMain.handle('manutencoes:relatorioDespesas', async () => {
+    return await relatorioDespesasPorVeiculo()
+  })
+}
+
 interface ResultadoValidacaoPlaca {
   valida: boolean
   formato: string
@@ -132,6 +207,8 @@ app.whenReady().then(async () => {
   createWindow()
   criarMenu()
   registrarHandlersVeiculos()
+  registrarHandlersMotoristas()
+  registrarHandlersManutencoes()
   registrarHandlerValidarPlaca()
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
