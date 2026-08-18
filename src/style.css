@@ -112,3 +112,42 @@ hr {
   border-top: 1px solid #334155;
   margin: 20px 0;
 }
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.campo label {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.campo-filtro {
+  margin-bottom: 8px;
+}
+
+.mensagem-erro {
+  width: 100%;
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #f87171;
+  min-height: 16px;
+}
+
+.mensagem-status {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #93c5fd;
+  min-height: 16px;
+}
+
+.lista-dados li.item-vazio {
+  background: transparent;
+  color: #64748b;
+  justify-content: center;
+  font-style: italic;
+}

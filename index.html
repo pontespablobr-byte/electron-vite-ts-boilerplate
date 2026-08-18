@@ -6,7 +6,49 @@
     <title>Gestão de Manutenção Preventiva e Corretiva de Veículos</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <h1>Gestão de Manutenção de Veículos</h1>
+
+      <section class="secao" id="secao-veiculos">
+        <h2>Veículos</h2>
+
+        <form id="form-veiculo" novalidate>
+          <div class="campo">
+            <label for="v-placa">Placa</label>
+            <input id="v-placa" name="placa" type="text" placeholder="Ex: ABC1D23" autocomplete="off" required />
+          </div>
+          <div class="campo">
+            <label for="v-modelo">Modelo</label>
+            <input id="v-modelo" name="modelo" type="text" placeholder="Ex: Onix" autocomplete="off" required />
+          </div>
+          <div class="campo">
+            <label for="v-marca">Marca</label>
+            <input id="v-marca" name="marca" type="text" placeholder="Ex: Chevrolet" autocomplete="off" required />
+          </div>
+          <div class="campo">
+            <label for="v-ano">Ano</label>
+            <input id="v-ano" name="ano" type="number" placeholder="Ex: 2022" min="1900" max="2100" required />
+          </div>
+          <button type="submit">Cadastrar Veículo</button>
+          <p id="erro-veiculo" class="mensagem-erro" role="alert"></p>
+        </form>
+
+        <div class="campo campo-filtro">
+          <label for="filtro-veiculos">Filtrar veículos carregados</label>
+          <input
+            id="filtro-veiculos"
+            type="text"
+            placeholder="Buscar por placa, marca ou modelo"
+            autocomplete="off"
+          />
+        </div>
+
+        <p id="status-veiculos" class="mensagem-status" aria-live="polite"></p>
+        <ul id="lista-veiculos" class="lista-dados"></ul>
+      </section>
+
+      <hr />
+    </div>
     <script type="module" src="/src/renderer.ts"></script>
   </body>
 </html>

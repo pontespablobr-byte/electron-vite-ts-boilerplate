@@ -69,23 +69,9 @@ declare global {
 
 const appElement = document.getElementById('app') as HTMLDivElement
 
-appElement.innerHTML = `
-  <h1>Gestão de Manutenção de Veículos</h1>
-
-  <section class="secao">
-    <h2>Veículos</h2>
-    <form id="form-veiculo">
-      <input id="v-placa" type="text" placeholder="Placa (ex: ABC1D23)" required />
-      <input id="v-modelo" type="text" placeholder="Modelo" required />
-      <input id="v-marca" type="text" placeholder="Marca" required />
-      <input id="v-ano" type="number" placeholder="Ano" required />
-      <button type="submit">Cadastrar Veículo</button>
-    </form>
-    <ul id="lista-veiculos"></ul>
-  </section>
-
-  <hr />
-
+appElement.insertAdjacentHTML(
+  'beforeend',
+  `
   <section class="secao">
     <h2>Motoristas</h2>
     <form id="form-motorista">
@@ -128,56 +114,195 @@ appElement.innerHTML = `
     <button id="btn-validar-placa">Validar</button>
     <p id="resultado-placa">Aguardando validação...</p>
   </section>
-`
+  `
+)
 
 // ===================== VEÍCULOS =====================
+// Estrutura em index.html. Aqui só cuidamos do que muda: carregar, validar,
+// renderizar por código (sem innerHTML com dado externo) e filtrar no cliente.
 
 const formVeiculo = document.getElementById('form-veiculo') as HTMLFormElement
+const campoPlaca = document.getElementById('v-placa') as HTMLInputElement
+const campoModelo = document.getElementById('v-modelo') as HTMLInputElement
+const campoMarca = document.getElementById('v-marca') as HTMLInputElement
+const campoAno = document.getElementById('v-ano') as HTMLInputElement
+const erroVeiculo = document.getElementById('erro-veiculo') as HTMLParagraphElement
+const formFiltroVeiculo = document.getElementById('form-filtro-veiculo') as HTMLFormElement
+const filtroVeiculos = document.getElementById('filtro-veiculos') as HTMLInputElement
+const erroFiltroVeiculo = document.getElementById('erro-filtro-veiculo') as HTMLParagraphElement
+const statusVeiculos = document.getElementById('status-veiculos') as HTMLParagraphElement
 const listaVeiculos = document.getElementById('lista-veiculos') as HTMLUListElement
 const selectVeiculoManutencao = document.getElementById('mn-veiculo') as HTMLSelectElement
 
-async function carregarVeiculos() {
-  const veiculos = await window.api.veiculos.listar()
+// Guarda em memória o que já foi carregado do Main, para o filtro não
+// precisar chamar o IPC de novo a cada tecla digitada.
+let veiculosCarregados: Veiculo[] = []
 
-  listaVeiculos.innerHTML = veiculos
-    .map(
-      (v) => `
-        <li>
-          ${v.placa} - ${v.marca} ${v.modelo} (${v.ano})
-          <button data-excluir-veiculo="${v.id}">Excluir</button>
-        </li>
-      `
+function limparErroVeiculo() {
+  erroVeiculo.textContent = ''
+}
+
+function mostrarErroVeiculo(mensagem: string) {
+  erroVeiculo.textContent = mensagem
+}
+
+function filtrarVeiculos(termo: string): Veiculo[] {
+  const termoNormalizado = termo.trim().toLowerCase()
+  if (!termoNormalizado) return veiculosCarregados
+
+  return veiculosCarregados.filter((v) => {
+    return (
+      v.placa.toLowerCase().includes(termoNormalizado) ||
+      v.marca.toLowerCase().includes(termoNormalizado) ||
+      v.modelo.toLowerCase().includes(termoNormalizado)
     )
-    .join('')
-
-  selectVeiculoManutencao.innerHTML = veiculos
-    .map((v) => `<option value="${v.id}">${v.placa} - ${v.marca} ${v.modelo}</option>`)
-    .join('')
-
-  listaVeiculos.querySelectorAll<HTMLButtonElement>('[data-excluir-veiculo]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const id = Number(btn.dataset.excluirVeiculo)
-      await window.api.veiculos.excluir(id)
-      await carregarVeiculos()
-    })
   })
 }
 
-formVeiculo.addEventListener('submit', async (evento) => {
+function criarItemVeiculo(veiculo: Veiculo): HTMLLIElement {
+  const item = document.createElement('li')
+
+  const textoPrincipal = document.createElement('span')
+  textoPrincipal.textContent = `${veiculo.placa} - ${veiculo.marca} ${veiculo.modelo} (${veiculo.ano})`
+
+  const botaoExcluir = document.createElement('button')
+  botaoExcluir.type = 'button'
+  botaoExcluir.textContent = 'Excluir'
+  botaoExcluir.addEventListener('click', async () => {
+    if (veiculo.id === undefined) return
+    try {
+      await window.api.veiculos.excluir(veiculo.id)
+      await carregarVeiculos()
+    } catch (erro) {
+      console.error('Erro ao excluir veículo:', erro)
+      statusVeiculos.textContent = 'Não foi possível excluir o veículo.'
+    }
+  })
+
+  item.appendChild(textoPrincipal)
+  item.appendChild(botaoExcluir)
+  return item
+}
+
+// Desfecho "não encontra": lista vazia (resposta vazia ou filtro sem match).
+function renderizarListaVazia(mensagem: string) {
+  while (listaVeiculos.firstChild) {
+    listaVeiculos.removeChild(listaVeiculos.firstChild)
+  }
+  const item = document.createElement('li')
+  item.className = 'item-vazio'
+  item.textContent = mensagem
+  listaVeiculos.appendChild(item)
+}
+
+// Desfecho "encontra": renderiza a lista recebida, item por item, via DOM.
+function renderizarListaVeiculos(veiculos: Veiculo[]) {
+  while (listaVeiculos.firstChild) {
+    listaVeiculos.removeChild(listaVeiculos.firstChild)
+  }
+
+  if (veiculos.length === 0) {
+    const filtroAtivo = filtroVeiculos.value.trim().length > 0
+    renderizarListaVazia(
+      filtroAtivo ? 'Nenhum veículo encontrado para esse filtro.' : 'Nenhum veículo cadastrado ainda.'
+    )
+    return
+  }
+
+  const fragmento = document.createDocumentFragment()
+  veiculos.forEach((veiculo) => fragmento.appendChild(criarItemVeiculo(veiculo)))
+  listaVeiculos.appendChild(fragmento)
+}
+
+function atualizarSelectVeiculoManutencao(veiculos: Veiculo[]) {
+  while (selectVeiculoManutencao.firstChild) {
+    selectVeiculoManutencao.removeChild(selectVeiculoManutencao.firstChild)
+  }
+
+  veiculos.forEach((veiculo) => {
+    const opcao = document.createElement('option')
+    opcao.value = String(veiculo.id ?? '')
+    opcao.textContent = `${veiculo.placa} - ${veiculo.marca} ${veiculo.modelo}`
+    selectVeiculoManutencao.appendChild(opcao)
+  })
+}
+
+// Desfecho "encontra" / "não encontra" da carga inicial, vindos do canal
+// veiculos:listar já existente (nenhum canal novo).
+async function carregarVeiculos() {
+  try {
+    const veiculos = await window.api.veiculos.listar()
+    veiculosCarregados = veiculos
+    atualizarSelectVeiculoManutencao(veiculos)
+
+    if (veiculos.length === 0) {
+      statusVeiculos.textContent = 'Nenhum veículo cadastrado ainda.'
+    } else {
+      statusVeiculos.textContent = `${veiculos.length} veículo(s) carregado(s).`
+    }
+
+    renderizarListaVeiculos(filtrarVeiculos(filtroVeiculos.value))
+  } catch (erro) {
+    console.error('Erro ao carregar veículos:', erro)
+    statusVeiculos.textContent = 'Não foi possível carregar os veículos.'
+  }
+}
+
+// Filtro no cliente: reage ao input, esconde itens já carregados,
+// sem chamar o IPC de novo.
+filtroVeiculos.addEventListener('input', () => {
+  erroFiltroVeiculo.textContent = ''
+  renderizarListaVeiculos(filtrarVeiculos(filtroVeiculos.value))
+})
+
+// Form de verdade para o filtro: Enter não recarrega a página (preventDefault)
+// e o parágrafo próprio de erro valida o termo antes de aplicar o filtro.
+formFiltroVeiculo.addEventListener('submit', (evento) => {
   evento.preventDefault()
 
-  const placa = (document.getElementById('v-placa') as HTMLInputElement).value
-  const modelo = (document.getElementById('v-modelo') as HTMLInputElement).value
-  const marca = (document.getElementById('v-marca') as HTMLInputElement).value
-  const ano = Number((document.getElementById('v-ano') as HTMLInputElement).value)
+  const termo = filtroVeiculos.value.trim()
+  if (termo.length === 1) {
+    erroFiltroVeiculo.textContent = 'Digite pelo menos 2 caracteres para buscar.'
+    return
+  }
+
+  erroFiltroVeiculo.textContent = ''
+  renderizarListaVeiculos(filtrarVeiculos(termo))
+})
+
+formVeiculo.addEventListener('submit', async (evento) => {
+  evento.preventDefault()
+  limparErroVeiculo()
+
+  const placa = campoPlaca.value.trim()
+  const modelo = campoModelo.value.trim()
+  const marca = campoMarca.value.trim()
+  const ano = Number(campoAno.value)
+
+  if (!placa || !modelo || !marca || !campoAno.value) {
+    mostrarErroVeiculo('Preencha placa, modelo, marca e ano antes de cadastrar.')
+    return
+  }
+
+  if (!Number.isInteger(ano) || ano < 1900 || ano > 2100) {
+    mostrarErroVeiculo('Informe um ano válido.')
+    return
+  }
 
   try {
+    // Desfecho "o Main recusa": se o canal rejeitar (ex.: placa duplicada),
+    // cai no catch abaixo com uma mensagem própria, sem alert().
     await window.api.veiculos.criar({ placa, modelo, marca, ano })
     formVeiculo.reset()
     await carregarVeiculos()
   } catch (erro) {
     console.error('Erro ao criar veículo:', erro)
-    alert('Erro ao cadastrar veículo. Verifique se a placa já existe.')
+    const mensagem = erro instanceof Error ? erro.message : 'Erro desconhecido ao cadastrar veículo.'
+    mostrarErroVeiculo(
+      mensagem.toLowerCase().includes('duplicate') || mensagem.toLowerCase().includes('unique')
+        ? 'Já existe um veículo cadastrado com essa placa.'
+        : 'Não foi possível cadastrar o veículo. Verifique os dados informados.'
+    )
   }
 })
 
