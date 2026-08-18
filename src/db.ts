@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Pool } from 'pg'
 import dotenv from 'dotenv'
 
@@ -40,4 +41,48 @@ export async function inicializarBanco() {
   `)
 
   console.log('Banco de dados inicializado com sucesso.')
+=======
+import { Pool } from 'pg'
+import dotenv from 'dotenv'
+
+dotenv.config()
+
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: true }, // necessário para Neon
+})
+
+export async function inicializarBanco() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS veiculos (
+      id SERIAL PRIMARY KEY,
+      placa VARCHAR(10) NOT NULL UNIQUE,
+      modelo VARCHAR(100) NOT NULL,
+      marca VARCHAR(100) NOT NULL,
+      ano INTEGER NOT NULL
+    );
+  `)
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS motoristas (
+      id SERIAL PRIMARY KEY,
+      nome VARCHAR(150) NOT NULL,
+      cnh VARCHAR(20) NOT NULL UNIQUE,
+      telefone VARCHAR(20) NOT NULL
+    );
+  `)
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS manutencoes (
+      id SERIAL PRIMARY KEY,
+      id_veiculo INTEGER NOT NULL REFERENCES veiculos(id) ON DELETE CASCADE,
+      tipo_servico VARCHAR(150) NOT NULL,
+      data DATE NOT NULL,
+      quilometragem INTEGER NOT NULL,
+      custo NUMERIC(10, 2) NOT NULL
+    );
+  `)
+
+  console.log('Banco de dados inicializado com sucesso.')
+>>>>>>> e3478f836096b4239ba0d6b3737e39fa97a12792
 }
