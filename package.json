@@ -1,6 +1,6 @@
 {
   "name": "Gestão de Manutenção Preventiva e Corretiva de Veículos",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "dist-electron/main.js",
   "description": "Projeto de referência: exercícios IPC",
   "scripts": {
