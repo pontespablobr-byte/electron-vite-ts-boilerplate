@@ -33,15 +33,18 @@
           <p id="erro-veiculo" class="mensagem-erro" role="alert"></p>
         </form>
 
-        <div class="campo campo-filtro">
-          <label for="filtro-veiculos">Filtrar veículos carregados</label>
-          <input
-            id="filtro-veiculos"
-            type="text"
-            placeholder="Buscar por placa, marca ou modelo"
-            autocomplete="off"
-          />
-        </div>
+        <form id="form-filtro-veiculo" novalidate>
+          <div class="campo campo-filtro">
+            <label for="filtro-veiculos">Filtrar veículos carregados</label>
+            <input
+              id="filtro-veiculos"
+              type="text"
+              placeholder="Buscar por placa, marca ou modelo"
+              autocomplete="off"
+            />
+          </div>
+          <p id="erro-filtro-veiculo" class="mensagem-erro" role="alert"></p>
+        </form>
 
         <p id="status-veiculos" class="mensagem-status" aria-live="polite"></p>
         <ul id="lista-veiculos" class="lista-dados"></ul>
